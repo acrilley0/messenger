@@ -24,19 +24,21 @@ int main(int argc, char* argv[]) {
       throw boost::system::system_error(ec);
     }
 
-    std::string message = "";
-    std::print("Write your message: ");
-    std::getline(std::cin, message);
+    for (;;) {
+      std::string message = "";
+      std::print("Write your message: ");
+      std::getline(std::cin, message);
 
-    size_t nbytes = socket.write_some(buffer(message), ec);
-    std::println("Wrote {} bytes", nbytes);
+      // std::getline strips newlines so we need to append one here so the server knows its the end of a message
+      size_t nbytes = socket.write_some(buffer(message + "\n"), ec);
+      std::println("Wrote {} bytes", nbytes);
 
-    if (ec == boost::asio::error::eof) {
-      // break; // Connection closed cleanly by peer
-    } else if (ec) {
-      throw boost::system::system_error(ec);
+      if (ec == boost::asio::error::eof) {
+        // break; // Connection closed cleanly by peer
+      } else if (ec) {
+        throw boost::system::system_error(ec);
+      }
     }
-
   } catch (std::exception& e) {
     std::cerr << e.what() << std::endl;
   }

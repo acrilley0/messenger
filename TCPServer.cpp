@@ -54,6 +54,13 @@ class TCPSession : public std::enable_shared_from_this<TCPSession> {
             boost::asio::buffers_begin(incoming_msg_.data()),
             boost::asio::buffers_end(incoming_msg_.data()));
         std::println("Received msg -- {}", incoming_msg_str);
+
+        incoming_msg_.consume(incoming_msg_.size()); // This flushes the buffer so that we can read again and not have anything left over
+
+        async_read_until(socket_, incoming_msg_, "\n",
+            std::bind(&TCPSession::handle_read, shared_from_this(),
+              placeholders::error,
+              placeholders::bytes_transferred));
       } else {
         std::println("Error: {}", error.what());
       }
