@@ -20,8 +20,11 @@ std::string make_daytime_string() {
   return ctime(&now);
 }
 
-// enable_shared_from_this creates a shared_ptr to 'this' when all we have is 'this
-// Without this we have no way of getting a shared_ptr to 'this'
+// std::enable_shared_from_this<T> lets an object safely create a shared_ptr to itself from within a member function
+
+// shared_from_this() passes a shared_ptr to this session as the 'this' for handle_read.
+// This keeps the session alive until the async operation completes and handle_read is called,
+// preventing the session from being destroyed while the read is still pending.
 class TCPSession : public std::enable_shared_from_this<TCPSession> {
   public:
     typedef std::shared_ptr<TCPSession> tcp_conn_p;
@@ -42,16 +45,17 @@ class TCPSession : public std::enable_shared_from_this<TCPSession> {
     }
 
   private:
-    TCPSession(io_context& ctx)
-      : socket_(ctx) {}
+    TCPSession(io_context& ctx) : socket_(ctx) {}
 
     void handle_write(const boost::system::error_code& error, size_t bytes_transferred) {}
     void handle_read(const boost::system::error_code& error, size_t bytes_transferred) {
-      if (!error) {
+      if (!error || error == boost::asio::error::eof) { // eof error signals client closed connection gracefully
         std::string incoming_msg_str(
             boost::asio::buffers_begin(incoming_msg_.data()),
             boost::asio::buffers_end(incoming_msg_.data()));
-        std::println("Received msg! {}", incoming_msg_str);
+        std::println("Received msg -- {}", incoming_msg_str);
+      } else {
+        std::println("Error: {}", error.what());
       }
     }
 

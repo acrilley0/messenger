@@ -24,7 +24,11 @@ int main(int argc, char* argv[]) {
       throw boost::system::system_error(ec);
     }
 
-    size_t nbytes = socket.write_some(buffer("hello there\n"), ec);
+    std::string message = "";
+    std::print("Write your message: ");
+    std::getline(std::cin, message);
+
+    size_t nbytes = socket.write_some(buffer(message), ec);
     std::println("Wrote {} bytes", nbytes);
 
     if (ec == boost::asio::error::eof) {
